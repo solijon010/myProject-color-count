@@ -35,7 +35,27 @@ const bodyEl = document.body;
 const formEl = document.querySelector(".form");
 const wrapperEl = document.querySelector(".wrapper");
 
-const colors = [];
+// colors
+const colors = JSON.parse(localStorage.getItem("colors")) || [];
+
+// active colors
+let activeColor = colors.length - 1;
+
+// create square
+
+const createSquareEl = (colors) => {
+  wrapperEl.innerHTML = "";
+  colors.forEach((color) => {
+    let squareEl = document.createElement("span");
+    squareEl.className = "square";
+    squareEl.style.backgroundColor = color;
+    wrapperEl.append(squareEl);
+  });
+  wrapperEl.children[activeColor].classList.add("active-square")
+};
+createSquareEl(colors);
+
+// submit form
 
 formEl.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -46,12 +66,9 @@ formEl.addEventListener("submit", (e) => {
     bodyEl.style.backgroundColor === color &&
     colors[colors.length - 1] != color
   ) {
-    let squareEl = document.createElement("span");
-    squareEl.classList.add("square");
-    squareEl.style.backgroundColor = color;
-    wrapperEl.append(squareEl);
     colors.push(color);
-    localStorage.setItem('colors',JSON.stringify(colors))
+    createSquareEl(colors);
+    localStorage.setItem("colors", JSON.stringify(colors));
   }
   console.log(colors);
 
