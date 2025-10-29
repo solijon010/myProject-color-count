@@ -160,3 +160,13 @@ body {
     width: 80%;
   }
 }
+
+.active-square{
+  background-color: #4f46e5; 
+  width: 14px;
+  height: 14px;
+  border-radius: 50%; 
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(79, 70, 229, 0.6); 
+  transform: scale(1.2); 
+}
