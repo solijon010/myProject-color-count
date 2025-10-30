@@ -1,76 +1,100 @@
-// const userName = window.prompt("ismingizni yozing!");
-
-// innerHTML
-// const title = document.querySelector("h1");
-// // title.innerHTML += ` <span style="color=orange">${userName}!</span>`;
-
-// const sarlovha = document.createElement("h2");
-
-// sarlovha.textContent = "Bu yangi yaratilgan sarlovha";
-// document.body.append(sarlovha);
-
-// Info: :localstorage
-// Primative
-// localStorage.setItem("name", "Solijon");
-// console.log(localStorage.getItem("name"));
-
-// JSON=> JavaScript Object Notation
-
-// non-primative
-// const user = {
-//   name: "Solijon",
-//   age: 22,
-//   isMarried: false,
-// };
-
-// // localStorage.setItem("userInfo", JSON.stringify(user));
-
-// const newUser = JSON.parse(localStorage.getItem("userInfo"));
-
-// console.log(newUser.age);
-
-// IDea: NEw Project boshlandi
-
 const bodyEl = document.body;
 const formEl = document.querySelector(".form");
 const wrapperEl = document.querySelector(".wrapper");
+const backBtn = document.querySelector(".buttons .btn:first-child");
+const nextBtn = document.querySelector(".buttons .btn:last-child");
 
-// colors
-const colors = JSON.parse(localStorage.getItem("colors")) || [];
+// Ma'lumotni sessionStorage'dan olish (localStorage o‘rniga)
+let colors = JSON.parse(sessionStorage.getItem("colors")) || [];
 
-// active colors
-let activeColor = colors.length - 1;
+// 🔹 Eski formatni yangilaymiz (faqat string bo‘lsa)
+if (Array.isArray(colors) && typeof colors[0] === "string") {
+  colors = colors.map(c => ({ color: c, count: 1 }));
+}
 
-// create square
+// 🔹 Noto‘g‘ri yoki bo‘sh elementlarni tozalaymiz
+colors = colors.filter(c => c && typeof c.color === "string" && c.color.trim() !== "");
 
+// 🔹 Tozalangan versiyani qayta saqlaymiz
+sessionStorage.setItem("colors", JSON.stringify(colors));
+
+// 🔹 Active index
+let activeColor = colors.length ? colors.length - 1 : -1;
+
+// 🔹 Rang kvadratlarini chizish
 const createSquareEl = (colors) => {
   wrapperEl.innerHTML = "";
-  colors.forEach((color) => {
-    let squareEl = document.createElement("span");
+
+  colors.forEach((colorObj, index) => {
+    if (!colorObj.color) return; // bo‘sh obyekt chiqmasin
+
+    const squareEl = document.createElement("span");
     squareEl.className = "square";
-    squareEl.style.backgroundColor = color;
-    wrapperEl.append(squareEl);
+    squareEl.style.backgroundColor = colorObj.color;
+    squareEl.dataset.index = index;
+    squareEl.title = `${colorObj.color} (${colorObj.count})`;
+
+    // Bosilganda tanlanadigan qilib qo‘yamiz
+    squareEl.addEventListener("click", () => {
+      const prev = wrapperEl.querySelector(".active-square");
+      if (prev) prev.classList.remove("active-square");
+      activeColor = index;
+      squareEl.classList.add("active-square");
+      bodyEl.style.backgroundColor = colorObj.color;
+      sessionStorage.setItem("colors", JSON.stringify(colors));
+    });
+
+    wrapperEl.appendChild(squareEl);
   });
-  wrapperEl.children[activeColor].classList.add("active-square")
+
+  // Active rangni tiklash
+  if (activeColor >= 0 && wrapperEl.children[activeColor]) {
+    wrapperEl.children[activeColor].classList.add("active-square");
+    bodyEl.style.backgroundColor = colors[activeColor].color;
+  }
 };
+
+// 🔹 Dastlab render
 createSquareEl(colors);
 
-// submit form
-
+// 🔹 Rang kiritish
 formEl.addEventListener("submit", (e) => {
   e.preventDefault();
   const formData = new FormData(formEl);
-  const color = formData.get("color").trim();
-  bodyEl.style.backgroundColor = color;
-  if (
-    bodyEl.style.backgroundColor === color &&
-    colors[colors.length - 1] != color
-  ) {
-    colors.push(color);
-    createSquareEl(colors);
-    localStorage.setItem("colors", JSON.stringify(colors));
-  }
-  console.log(colors);
+  const color = formData.get("color").trim().toLowerCase();
 
+  if (!color) return formEl.reset();
+
+  const lastColor = colors.length ? colors[colors.length - 1].color : null;
+
+  // Agar oxirgi rang shu bo‘lsa — sanog‘ini oshiramiz
+  if (lastColor === color) {
+    colors[colors.length - 1].count++;
+  } else {
+    // Yangi rang obyekt sifatida
+    colors.push({ color, count: 1 });
+  }
+
+  // Yangilash
+  activeColor = colors.length - 1;
+  sessionStorage.setItem("colors", JSON.stringify(colors));
+  createSquareEl(colors);
+  bodyEl.style.backgroundColor = color;
   formEl.reset();
+});
+
+// 🔹 Back tugmasi
+backBtn.addEventListener("click", () => {
+  if (colors.length === 0) return;
+  activeColor = (activeColor - 1 + colors.length) % colors.length;
+  bodyEl.style.backgroundColor = colors[activeColor].color;
+  createSquareEl(colors);
+});
+
+// 🔹 Next tugmasi
+nextBtn.addEventListener("click", () => {
+  if (colors.length === 0) return;
+  activeColor = (activeColor + 1) % colors.length;
+  bodyEl.style.backgroundColor = colors[activeColor].color;
+  createSquareEl(colors);
 });
